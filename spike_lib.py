@@ -90,8 +90,10 @@ def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
     
     lpeak = prelabeled_peaks
     
-    signal2 = nBiasedConvolve(signal,genLorentzian(pw0,1)-np.mean(genLorentzian(pw0,1)))
-    signal2 = np.append(np.zeros(int(pw0*0.5)+1),signal2);
+    #signal2 = nBiasedConvolve(signal,genLorentzian(pw0,1)-np.mean(genLorentzian(pw0,1)))
+    #signal2 = np.append(np.zeros(int(pw0*0.5)+1),signal2);
+
+    signal2 = np.convolve(signal,genLorentzian(pw0,1),mode='same');
 
     pdf = np.zeros([len(prelabeled_peaks),len(pulse_widths)])    
 
@@ -119,8 +121,10 @@ def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
     #pulse_width = 41.;
         pulse_width = pulse_widths[p] 
         
-        signal2 = nBiasedConvolve(signal,genLorentzian(pulse_width,1)-np.mean(genLorentzian(pulse_width,1)))
-        signal2=np.append(np.zeros(int(pulse_width*0.5)+1),signal2);
+        #signal2 = nBiasedConvolve(signal,genLorentzian(pulse_width,1)-np.mean(genLorentzian(pulse_width,1)))
+        #signal2=np.append(np.zeros(int(pulse_width*0.5)+1),signal2);
+        
+        signal2 = np.convolve(signal,genLorentzian(pulse_width,1),mode='same');
         
         labeled_peaks = np.zeros(len(lpeak));
         
