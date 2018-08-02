@@ -32,16 +32,6 @@ def highFatButter(cutoff,fs,order=5):
     normalCutoff = cutoff/nyq
     b,a = sig.butter(order,normalCutoff,btype='high',analog=False);
     return b,a
-
-def nBiasedConvolve(data, conv):
-    #takes data and convolutes with conv, while making sure the mean of both data and conv in the window is zero mean
-    convData = []
-    for i in range(0,len(data)-len(conv)):
-        temp_data = data[i:i+len(conv)]
-        #std_data = (temp_data-np.mean(temp_data))/np.std(temp_data)
-        temp_data= temp_data-np.mean(temp_data)
-        convData.append(sum(temp_data*conv));
-    return np.array(convData)
     
 def closest(num,arr):
     return arr[np.argmin((arr-num)**2)]
@@ -89,9 +79,6 @@ def get_opt(lpdf,tpdf,amp_f,curve_f):
 def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
     
     lpeak = prelabeled_peaks
-    
-    #signal2 = nBiasedConvolve(signal,genLorentzian(pw0,1)-np.mean(genLorentzian(pw0,1)))
-    #signal2 = np.append(np.zeros(int(pw0*0.5)+1),signal2);
 
     signal2 = np.convolve(signal,genLorentzian(pw0,1),mode='same');
 
@@ -110,19 +97,14 @@ def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
         loc = lpeak[i]
         proms = sig.peak_prominences(-signal2,sig.find_peaks(-signal2[loc-ptl:loc+ptl+1])[0]+(loc-ptl),wlen=int(1.5*pw0))[0];
         labeled_peaks[i] =sig.find_peaks(-signal2[loc-ptl:loc+ptl+1])[0][np.argmax(proms)]+loc-ptl
-        #labeled_peaks[i] = loc-ptl+closest(ptl,sig.find_peaks(-signal2[loc-ptl:loc+ptl+1])[0])
-        #update peak locations
         lpeak[i] = labeled_peaks[i]
     
     not_det = []
     
     
     for p in range(len(pulse_widths)):
-    #pulse_width = 41.;
-        pulse_width = pulse_widths[p] 
         
-        #signal2 = nBiasedConvolve(signal,genLorentzian(pulse_width,1)-np.mean(genLorentzian(pulse_width,1)))
-        #signal2=np.append(np.zeros(int(pulse_width*0.5)+1),signal2);
+        pulse_width = pulse_widths[p] 
         
         signal2 = np.convolve(signal,genLorentzian(pulse_width,1),mode='same');
         
@@ -130,6 +112,7 @@ def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
         
         ptl = 3; #peak tracking tolerance
         
+        #updating peak locations
         for i in range(len(lpeak)):
             loc = lpeak[i]
             try:
@@ -137,20 +120,17 @@ def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
                 lpeak[i] = labeled_peaks[i]
             except:
                 not_det.append(loc)
-            #update peak locations
            
-        
-        #lprom = peak_prom(-signal2,labeled_peaks);
         print lpeak
         for i in range(len(lpeak)):
             try:
                 pdf[i,p] = sig.peak_prominences(-signal2,[int(lpeak[i])],wlen=int(pulse_width*1.5))[0][0]
             except:
                 pdf[i,p] = 0
-            #pdf[i,p] = lprom[i];
-
+                
         total_peaks = np.zeros(len(tpeak))
         
+        #updating peak locations
         for i in range(len(tpeak)):
             loc = tpeak[i]
             if not loc in not_det:
@@ -171,6 +151,4 @@ def pdf(signal,pulse_widths,pw0,prelabeled_peaks=[]):
                     except:
                         totalpdf[i,p] = 0;
         
-           
-        #pdf.append(metric2)
     return pulse_widths,pdf,totalpdf,lpeak,tpeakcopy
